@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import type { Product } from '../types/Product';
 
 type ProductContextType = {
@@ -13,18 +13,34 @@ const ProductProvider = ({ children }: { children: React.ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchProducts = async () => {
-      const response = await fetch('https://fakestoreapi.com/products');
-      const data = await response.json();
-      setProducts(data);
+      try {
+        const response = await fetch('https://fakestoreapi.com/products', {
+          signal: controller.signal,
+        });
+        const data = (await response.json()) as Product[];
+        setProducts(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        console.error('Failed to fetch products', error);
+      }
     };
+
     fetchProducts();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
+  const value = useMemo(() => ({ products }), [products]);
+
   return (
-    <ProductContext.Provider value={{ products }}>
-      {children}
-    </ProductContext.Provider>
+    <ProductContext.Provider value={value}>{children}</ProductContext.Provider>
   );
 };
 

@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useMemo, useState } from 'react';
 import type { CartItem } from '../types/CartItem';
 import type { Product } from '../types/Product';
 
@@ -18,83 +18,87 @@ export const CartContext = createContext<CartContextType>(
 
 const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [itemAmount, setItemAmount] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
 
-  useEffect(() => {
-    const total = cart.reduce((accumulator, currentItem) => {
-      return accumulator + currentItem.price * currentItem.amount;
-    }, 0);
-    setTotalPrice(total);
-  }, [cart]);
+  const addToCart = useCallback((product: Product | CartItem) => {
+    setCart((currentCart) => {
+      const cartItem = currentCart.find((item) => item.id === product.id);
 
-  useEffect(() => {
-    const amount = cart.reduce((accumulator, currentItem) => {
-      return accumulator + currentItem.amount;
-    }, 0);
-    setItemAmount(amount);
-  }, [cart]);
+      if (cartItem) {
+        return currentCart.map((item) =>
+          item.id === product.id
+            ? { ...item, amount: cartItem.amount + 1 }
+            : item
+        );
+      }
 
-  const addToCart = (product: Product | CartItem) => {
-    const cartItem = cart.find((item) => {
-      return item.id === product.id;
-    });
-
-    if (cartItem) {
-      const newCart = cart.map((item) =>
-        item.id === product.id ? { ...item, amount: cartItem.amount + 1 } : item
-      );
-      setCart(newCart);
-    } else {
       const newItem = { ...product, amount: 1 };
-      setCart([...cart, newItem]);
-    }
-  };
-
-  const decreaseAmount = (id: number) => {
-    const cartItem = cart.find((item) => item.id === id);
-
-    if (!cartItem) {
-      return;
-    }
-
-    if (cartItem.amount <= 1) {
-      removeFromCart(id);
-      return;
-    }
-
-    const newCart = cart.map((item) =>
-      item.id === id ? { ...item, amount: cartItem.amount - 1 } : item
-    );
-    setCart(newCart);
-  };
-
-  const removeFromCart = (id: number) => {
-    const newCart = cart.filter((item) => {
-      return item.id !== id;
+      return [...currentCart, newItem];
     });
-    setCart(newCart);
-  };
+  }, []);
 
-  const clearCart = () => {
+  const removeFromCart = useCallback((id: number) => {
+    setCart((currentCart) =>
+      currentCart.filter((item) => {
+        return item.id !== id;
+      })
+    );
+  }, []);
+
+  const decreaseAmount = useCallback((id: number) => {
+    setCart((currentCart) => {
+      const cartItem = currentCart.find((item) => item.id === id);
+
+      if (!cartItem) {
+        return currentCart;
+      }
+
+      if (cartItem.amount <= 1) {
+        return currentCart.filter((item) => item.id !== id);
+      }
+
+      return currentCart.map((item) =>
+        item.id === id ? { ...item, amount: cartItem.amount - 1 } : item
+      );
+    });
+  }, []);
+
+  const clearCart = useCallback(() => {
     setCart([]);
-  };
+  }, []);
 
-  return (
-    <CartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        clearCart,
-        decreaseAmount,
-        itemAmount,
-        total: totalPrice,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+  const { totalPrice, itemAmount } = useMemo(() => {
+    return cart.reduce(
+      (accumulator, item) => {
+        return {
+          totalPrice: accumulator.totalPrice + item.price * item.amount,
+          itemAmount: accumulator.itemAmount + item.amount,
+        };
+      },
+      { totalPrice: 0, itemAmount: 0 }
+    );
+  }, [cart]);
+
+  const value = useMemo(() => {
+    return {
+      cart,
+      addToCart,
+      removeFromCart,
+      clearCart,
+      decreaseAmount,
+      itemAmount,
+      total: totalPrice,
+    };
+  }, [
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    decreaseAmount,
+    itemAmount,
+    totalPrice,
+  ]);
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
 export default CartProvider;
