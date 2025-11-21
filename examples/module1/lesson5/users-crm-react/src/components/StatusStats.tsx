@@ -1,38 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { User } from '../model/User';
+import { useMemo } from 'react';
+import { useUsersQuery } from '../hooks/useUsersQuery';
 import { getStatusColor } from '../utils/statusColors';
 
 const StatusStats = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    error,
+  } = useUsersQuery();
 
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/data/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
-      setUsers(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const statusCounts = useMemo(
+    () =>
+      users.reduce((acc: Record<string, number>, user) => {
+        acc[user.status] = (acc[user.status] || 0) + 1;
+        return acc;
+      }, {}),
+    [users]
+  );
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const statusCounts = useMemo(() => {
-    return users.reduce((acc: Record<string, number>, user: User) => {
-      acc[user.status] = (acc[user.status] || 0) + 1;
-      return acc;
-    }, {});
-  }, [users]);
-
-  if (loading) return <div>Loading stats...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (isLoading) return <div>Loading stats...</div>;
+  if (isError)
+    return (
+      <div>
+        Error: {error instanceof Error ? error.message : 'An error occurred'}
+      </div>
+    );
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
