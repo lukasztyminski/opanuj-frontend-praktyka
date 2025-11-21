@@ -1,6 +1,6 @@
 import { test, expect, describe } from 'vitest';
 import { calculateDiscount } from './coupons';
-import { Order } from './types';
+import type { Order } from './types';
 
 describe('Discount calculation', () => {
   test('applies 10% discount for orders over 1000', () => {

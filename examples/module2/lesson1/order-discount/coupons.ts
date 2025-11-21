@@ -1,4 +1,4 @@
-import { Order } from './types';
+import type { Order } from './types';
 
 export function calculateDiscount(order: Order): number {
   let discount = 0;

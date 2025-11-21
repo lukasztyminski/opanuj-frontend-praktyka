@@ -1,5 +1,5 @@
-import { Order } from './types/Order';
-import { OrderProcessor } from './types/OrderProcessor';
+import type { Order } from './types/Order';
+import type { OrderProcessor } from './types/OrderProcessor';
 
 export async function handleNewOrder(order: Order, processor: OrderProcessor) {
   if (order.quantity < 0) {

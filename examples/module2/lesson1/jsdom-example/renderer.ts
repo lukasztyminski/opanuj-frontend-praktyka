@@ -20,9 +20,9 @@ export function renderItems(container: HTMLElement, users: User[]): void {
       ${allowedUsers
         .map(
           (user) =>
-            `<li>${user.role === 'admin' && '(Admin)'} Name: ${
-              user.name
-            }, Age: ${user.age}</li>`
+            `<li>${user.role === 'admin' ? '(Admin) ' : ''}Name: ${user.name}, Age: ${
+              user.age
+            }</li>`
         )
         .join('')}
     </ul>
