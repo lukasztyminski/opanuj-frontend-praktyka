@@ -3,8 +3,24 @@
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import type { CharacterListResponse } from './api/api-client-generated';
 import App from './App';
+
+const getCharactersMock = vi.hoisted(() => vi.fn());
+
+vi.mock('./api/api-client-generated', async () => {
+  const actual =
+    await vi.importActual<typeof import('./api/api-client-generated')>(
+      './api/api-client-generated'
+    );
+
+  return {
+    ...actual,
+    DefaultApi: vi.fn(() => ({
+      getCharacters: getCharactersMock,
+    })),
+  };
+});
 
 const createClient = () =>
   new QueryClient({
@@ -13,48 +29,68 @@ const createClient = () =>
     },
   });
 
-const renderApp = () => {
-  const queryClient = createClient();
-  const user = userEvent.setup();
-
-  const view = render(
-    <QueryClientProvider client={queryClient}>
+const renderApp = () =>
+  render(
+    <QueryClientProvider client={createClient()}>
       <App />
     </QueryClientProvider>
   );
 
-  return { user, ...view };
-};
+describe('Rick and Morty characters', () => {
+  beforeEach(() => {
+    getCharactersMock.mockResolvedValue({
+      data: {
+        info: { count: 2, pages: 1 },
+        results: [
+          {
+            id: 1,
+            name: 'Rick Sanchez',
+            status: 'Alive',
+            species: 'Human',
+            gender: 'Male',
+            origin: { name: 'Earth (C-137)' },
+            location: { name: 'Citadel of Ricks' },
+            image: 'https://rickandmortyapi.com/api/character/avatar/1.jpeg',
+          },
+          {
+            id: 2,
+            name: 'Morty Smith',
+            status: 'Alive',
+            species: 'Human',
+            gender: 'Male',
+            origin: { name: 'unknown' },
+            location: { name: 'Earth (Replacement Dimension)' },
+            image: 'https://rickandmortyapi.com/api/character/avatar/2.jpeg',
+          },
+        ],
+      } satisfies CharacterListResponse,
+    });
+  });
 
-describe('Books app', () => {
-  test('renders initial books from React Query cache', () => {
+  afterEach(() => {
+    getCharactersMock.mockReset();
+  });
+
+  test('renders characters from the API client', async () => {
     renderApp();
 
-    const list = screen.getByRole('list');
+    expect(screen.getByText(/ładuję postacie/i)).toBeInTheDocument();
+
+    const list = await screen.findByRole('list', { name: /lista bohaterów/i });
     const items = within(list).getAllByRole('listitem');
 
     expect(items).toHaveLength(2);
-    expect(items[0]).toHaveTextContent('Clean Code');
-    expect(items[1]).toHaveTextContent('Domain-Driven Design');
+    expect(items[0]).toHaveTextContent('Rick Sanchez');
+    expect(items[1]).toHaveTextContent('Morty Smith');
   });
 
-  test('adds a new book and shows it in the UI', async () => {
-    const { user } = renderApp();
+  test('shows an error when fetching characters fails', async () => {
+    getCharactersMock.mockRejectedValueOnce(new Error('Network unavailable'));
 
-    await user.type(screen.getByLabelText('Tytuł książki'), 'Rework');
-    await user.type(screen.getByLabelText('Autor książki'), 'Jason Fried');
-    await user.click(screen.getByRole('button', { name: /dodaj książkę/i }));
+    renderApp();
 
-    expect(await screen.findByText('Rework')).toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
-  });
-
-  test('removes a book from the UI', async () => {
-    const { user } = renderApp();
-
-    await user.click(screen.getByRole('button', { name: /Usuń Clean Code/i }));
-
-    expect(screen.queryByText('Clean Code')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(
+      await screen.findByText(/nie udało się pobrać danych/i)
+    ).toBeInTheDocument();
   });
 });

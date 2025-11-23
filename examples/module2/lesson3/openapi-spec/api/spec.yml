@@ -39,3 +39,45 @@ components:
         content:
           type: string
           example: 'This is the content of the article.'
+  /lesson:
+    post:
+      summary: Dodaje nową lekcję
+      operationId: addLesson
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+              properties:
+                title:
+                  type: string
+                  example: 'Wprowadzenie do React'
+                description:
+                  type: string
+                  example: 'Podstawowe pojęcia i pierwsze kroki w React.'
+      responses:
+        '201':
+          description: Lekcja została pomyślnie dodana
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unikalny identyfikator nowo dodanej lekcji
+                    example: '123e4567-e89b-12d3-a456-426614174000'
+                  title:
+                    type: string
+                    example: 'Wprowadzenie do React'
+                  description:
+                    type: string
+                    example: 'Podstawowe pojęcia i pierwsze kroki w React.'
+        '400':
+          description: Nieprawidłowe żądanie, brakuje tytułu lub opisu
+        '500':
+          description: Błąd serwera

@@ -1,8 +1,8 @@
 import './App.css';
-import BooksContainer from './containers/BooksContainer';
+import CharactersContainer from './containers/CharactersContainer';
 
 function App() {
-  return <BooksContainer />;
+  return <CharactersContainer />;
 }
 
 export default App;

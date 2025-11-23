@@ -1,0 +1,15 @@
+.gitignore
+.npmignore
+.openapi-generator-ignore
+api.ts
+base.ts
+common.ts
+configuration.ts
+docs/Character.md
+docs/CharacterListResponse.md
+docs/CharacterListResponseInfo.md
+docs/CharacterLocation.md
+docs/CharacterOrigin.md
+docs/DefaultApi.md
+git_push.sh
+index.ts
