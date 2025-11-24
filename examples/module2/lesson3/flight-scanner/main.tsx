@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { FlightScannerForm } from './FlightScannerForm';
+import { FlightScannerForm } from './components/FlightScannerForm';
 
 const rootElement = document.getElementById('app');
 

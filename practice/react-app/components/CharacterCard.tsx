@@ -17,7 +17,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
 
   return (
     <li className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-lg ring-1 ring-slate-800 transition duration-200 hover:-translate-y-1 hover:border-emerald-400/60 hover:ring-emerald-400/30">
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4">
         <img
           alt={`Zdjęcie ${character.name ?? 'bohatera'}`}
           className="h-20 w-20 rounded-xl object-cover ring-2 ring-slate-800 group-hover:ring-emerald-400/70"
@@ -29,7 +29,9 @@ export function CharacterCard({ character }: CharacterCardProps) {
             <p className="text-lg font-semibold text-white">
               {character.name ?? 'Nieznana postać'}
             </p>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
+            >
               {character.status ?? 'unknown'}
             </span>
           </div>

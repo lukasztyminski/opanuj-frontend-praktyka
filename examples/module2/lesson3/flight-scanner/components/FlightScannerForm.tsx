@@ -1,16 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { FlightFormSchema, type FlightFormFields } from '../models/Form';
+import { useForm } from '../hooks/useForm';
 
-type TripType = 'one-way' | 'round-trip';
-
-type FlightFormState = {
-  origin: string;
-  destination: string;
-  trip: TripType;
-  startDate: string;
-  endDate: string;
-};
-
-const initialState: FlightFormState = {
+const initialState: FlightFormFields = {
   origin: 'Kraków',
   destination: 'Boston',
   trip: 'one-way',
@@ -19,37 +11,23 @@ const initialState: FlightFormState = {
 };
 
 export function FlightScannerForm() {
-  const [formData, setFormData] = useState<FlightFormState>(initialState);
-  const [errors, setErrors] = useState<string[]>([]);
+  const { formData, handleChange, handleValidation, errors } =
+    useForm<FlightFormFields>(FlightFormSchema, initialState);
 
   const isRoundTrip = useMemo(
     () => formData.trip === 'round-trip',
     [formData.trip]
   );
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const newErrors: string[] = [];
 
-    if (!formData.origin.trim()) newErrors.push('Origin is required');
-    if (!formData.destination.trim()) newErrors.push('Destination is required');
-    if (!formData.startDate.trim()) newErrors.push('Start date is required');
-    if (isRoundTrip && !formData.endDate.trim()) {
-      newErrors.push('Return date is required for round trip');
-    }
-
-    setErrors(newErrors);
-    if (newErrors.length === 0) {
-      console.log('Searching flights with data:', formData);
-      alert('Searching flights… check the console for submitted data.');
-    }
+    handleValidation()
+      .then((validData) => {
+        console.log('Searching flights with data:', validData);
+        alert('Searching flights… check the console for submitted data.');
+      })
+      .catch(() => {});
   };
 
   return (
@@ -88,9 +66,7 @@ export function FlightScannerForm() {
                 name="trip"
                 value="one-way"
                 checked={formData.trip === 'one-way'}
-                onChange={() =>
-                  setFormData((prev) => ({ ...prev, trip: 'one-way' }))
-                }
+                onChange={handleChange}
               />
               One way
             </label>
@@ -100,9 +76,7 @@ export function FlightScannerForm() {
                 name="trip"
                 value="round-trip"
                 checked={formData.trip === 'round-trip'}
-                onChange={() =>
-                  setFormData((prev) => ({ ...prev, trip: 'round-trip' }))
-                }
+                onChange={handleChange}
               />
               Round trip
             </label>
@@ -125,7 +99,7 @@ export function FlightScannerForm() {
               <input
                 name="endDate"
                 type="text"
-                value={formData.endDate}
+                value={formData.endDate ?? ''}
                 onChange={handleChange}
                 placeholder="10-05-2024"
                 className="border border-gray-200 rounded-md p-2"
